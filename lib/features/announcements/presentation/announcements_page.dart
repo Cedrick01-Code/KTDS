@@ -1,36 +1,44 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/theme/app_colors.dart';
+import '../../../core/network/ktds_api.dart';
+import '../../../core/widgets/ktds_states.dart';
 
-class AnnouncementsPage extends ConsumerWidget {
+class AnnouncementsPage extends ConsumerStatefulWidget {
   const AnnouncementsPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AnnouncementsPage> createState() => _AnnouncementsPageState();
+}
+
+class _AnnouncementsPageState extends ConsumerState<AnnouncementsPage> {
+  late Future<List<Map<String, dynamic>>> _future;
+  @override
+  void initState() { super.initState(); _future = ref.read(ktdsApiProvider).announcements(); }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('School Announcements'),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: const [
-          _AnnouncementCard(
-            title: 'End of Term Notice',
-            message: 'All discipline records must be finalized by the end of this week. Thank you for your cooperation.',
-            date: '20 Sep 2026',
-            audience: 'ALL STAFF',
-          ),
-          _AnnouncementCard(
-            title: 'Uniform Policy Update',
-            message: 'Please note the slight changes in the school uniform policy effective next term. Details attached.',
-            date: '15 Sep 2026',
-            audience: 'PARENTS & STUDENTS',
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        child: const Icon(Icons.add_rounded),
+      body: FutureBuilder<List<Map<String, dynamic>>>(
+        future: _future,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) return const KtdsLoadingState();
+          if (snapshot.hasError) return KtdsErrorState(error: snapshot.error!, onRetry: () => setState(() => _future = ref.read(ktdsApiProvider).announcements()));
+          final announcements = snapshot.data!;
+          if (announcements.isEmpty) return const KtdsEmptyState(title: 'No announcements', message: 'School announcements will appear here.', icon: Icons.campaign_outlined);
+          return ListView(
+            padding: const EdgeInsets.all(20),
+            children: [for (final item in announcements) _AnnouncementCard(
+              title: (item['title'] ?? 'Announcement').toString(),
+              message: (item['message'] ?? '').toString(),
+              date: (item['createdAt'] ?? '').toString(),
+              audience: (item['audience'] ?? 'ALL').toString(),
+            )],
+          );
+        },
       ),
     );
   }

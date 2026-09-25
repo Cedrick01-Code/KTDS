@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/theme/app_colors.dart';
+import '../../../core/network/ktds_api.dart';
 import '../../auth/presentation/auth_controller.dart';
 
 class RecordIncidentPage extends ConsumerStatefulWidget {
@@ -18,6 +19,7 @@ class _RecordIncidentPageState extends ConsumerState<RecordIncidentPage> {
   String? _selectedStudent = 'Patrick N. (S5 Software Development)';
   String? _selectedCategory = 'Late to class';
   int _points = 2;
+  bool _isSubmitting = false;
   final _reasonController = TextEditingController(text: 'Arrived 20 minutes late without valid excuse.');
 
   final List<String> _students = [
@@ -25,6 +27,7 @@ class _RecordIncidentPageState extends ConsumerState<RecordIncidentPage> {
     'Amina K. (S3 Business Studies)',
     'Joel M. (S2 Geography)',
   ];
+  final List<String> _studentIds = ['ST-1001', 'ST-1002', 'ST-1003'];
 
   final List<String> _categories = [
     'Late to class',
@@ -58,18 +61,32 @@ class _RecordIncidentPageState extends ConsumerState<RecordIncidentPage> {
   Future<void> _submit() async {
     final role = ref.read(authRoleProvider) ?? 'TEACHER';
     final isDirect = role == 'DOD' || role == 'PATRON' || role == 'MATRON';
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          isDirect
-              ? 'Direct deduction applied immediately! New score calculated.'
-              : 'Deduction submitted! Pending Admin approval.',
-        ),
+    if (_selectedStudent == null || _selectedCategory == null || _reasonController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Complete the student, category, and incident details first.')));
+      return;
+    }
+    setState(() => _isSubmitting = true);
+    try {
+      final index = _students.indexOf(_selectedStudent!);
+      await ref.read(ktdsApiProvider).recordIncident(
+        studentId: _studentIds[index],
+        category: _selectedCategory!,
+        description: _reasonController.text.trim(),
+        points: _points,
+        role: role,
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(isDirect ? 'Direct deduction recorded.' : 'Deduction submitted for approval.'),
         backgroundColor: isDirect ? AppColors.success : AppColors.primaryBlue,
-      ),
-    );
-    context.pop();
+      ));
+      context.pop();
+    } catch (error) {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Incident could not be recorded: $error')));
+      }
+    }
   }
 
   @override
@@ -120,8 +137,10 @@ class _RecordIncidentPageState extends ConsumerState<RecordIncidentPage> {
                     children: [
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: details.onStepContinue,
-                          child: Text(_currentStep == 5 ? (isDirect ? 'Apply Direct Deduction' : 'Submit for Admin Approval') : 'Continue'),
+                          onPressed: _isSubmitting ? null : details.onStepContinue,
+                          child: _isSubmitting
+                              ? const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                              : Text(_currentStep == 5 ? (isDirect ? 'Apply Direct Deduction' : 'Submit for Admin Approval') : 'Continue'),
                         ),
                       ),
                       if (_currentStep > 0) ...[
@@ -144,7 +163,10 @@ class _RecordIncidentPageState extends ConsumerState<RecordIncidentPage> {
                         .map((s) => RadioListTile<String>(
                               title: Text(s),
                               value: s,
+                              // TODO: migrate to RadioGroup when the minimum Flutter SDK is raised.
+                              // ignore: deprecated_member_use
                               groupValue: _selectedStudent,
+                              // ignore: deprecated_member_use
                               onChanged: (value) => setState(() => _selectedStudent = value),
                             ))
                         .toList(),

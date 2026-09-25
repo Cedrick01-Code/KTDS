@@ -110,6 +110,12 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                 DropdownButtonFormField<String>(
                   initialValue: _role,
                   decoration: const InputDecoration(labelText: 'Role'),
+                  selectedItemBuilder: (context) => const [
+                    Text('Selected role'),
+                    Text('DOD'),
+                    Text('Patron'),
+                    Text('Matron'),
+                  ],
                   items: const [
                     DropdownMenuItem(value: 'TEACHER', child: Text('Teacher')),
                     DropdownMenuItem(value: 'DOD', child: Text('DOD')),

@@ -6,7 +6,7 @@ import '../features/auth/presentation/splash_page.dart';
 import '../features/auth/presentation/login_page.dart';
 import '../features/auth/presentation/register_page.dart';
 import '../features/auth/presentation/forced_password_change_page.dart';
-import '../features/portal/presentation/portal_page.dart';
+import '../features/portal/presentation/ktds_shell.dart';
 import '../features/discipline/presentation/record_incident_page.dart';
 import '../features/discipline/presentation/manager_case_page.dart';
 import '../features/notifications/presentation/notification_center_page.dart';
@@ -50,15 +50,23 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/admin/dashboard',
-        builder: (context, state) => const PortalPage(role: PortalRole.admin),
+        builder: (context, state) => const KtdsShell(role: 'ADMIN'),
       ),
       GoRoute(
         path: '/manager/dashboard',
-        builder: (context, state) => const PortalPage(role: PortalRole.manager),
+        builder: (context, state) => const KtdsShell(role: 'SCHOOL_MANAGER'),
       ),
       GoRoute(
         path: '/staff/dashboard',
-        builder: (context, state) => const PortalPage(role: PortalRole.staff),
+        builder: (context, state) => const KtdsShell(role: 'TEACHER'),
+      ),
+      GoRoute(
+        path: '/student/dashboard',
+        builder: (context, state) => const KtdsShell(role: 'STUDENT'),
+      ),
+      GoRoute(
+        path: '/parent/dashboard',
+        builder: (context, state) => const KtdsShell(role: 'PARENT'),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

@@ -17,6 +17,7 @@ abstract final class AppTheme {
 
     return ThemeData(
       useMaterial3: true,
+      fontFamily: 'Arial',
       colorScheme: scheme,
       scaffoldBackgroundColor: AppColors.mist,
       appBarTheme: const AppBarTheme(
@@ -59,6 +60,15 @@ abstract final class AppTheme {
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      ),
+      navigationBarTheme: const NavigationBarThemeData(
+        backgroundColor: Colors.white,
+        indicatorColor: AppColors.lightBlue,
+        labelTextStyle: WidgetStatePropertyAll(TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
+      ),
+      navigationRailTheme: const NavigationRailThemeData(
+        backgroundColor: Colors.white,
+        indicatorColor: AppColors.lightBlue,
       ),
     );
   }
