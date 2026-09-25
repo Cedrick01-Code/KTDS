@@ -1,0 +1,1 @@
+{"version":3,"file":"announcement.service.d.ts","sourceRoot":"","sources":["announcement.service.ts"],"names":[],"mappings":"AAEA,qBAAa,mBAAmB;WACjB,kBAAkB,CAAC,IAAI,EAAE;QACpC,QAAQ,EAAE,MAAM,CAAC;QACjB,KAAK,EAAE,MAAM,CAAC;QACd,OAAO,EAAE,MAAM,CAAC;QAChB,QAAQ,EAAE,MAAM,CAAC;KAClB;;;;;;;;;WAMY,iBAAiB,CAAC,QAAQ,EAAE,MAAM,EAAE,QAAQ,CAAC,EAAE,MAAM;;;;;;;;;CAanE"}

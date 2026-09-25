@@ -1,0 +1,1 @@
+{"version":3,"file":"announcement.controller.d.ts","sourceRoot":"","sources":["announcement.controller.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,OAAO,EAAE,QAAQ,EAAE,MAAM,SAAS,CAAC;AAG5C,qBAAa,sBAAsB;WACpB,MAAM,CAAC,GAAG,EAAE,OAAO,EAAE,GAAG,EAAE,QAAQ;WASlC,IAAI,CAAC,GAAG,EAAE,OAAO,EAAE,GAAG,EAAE,QAAQ;CAY9C"}

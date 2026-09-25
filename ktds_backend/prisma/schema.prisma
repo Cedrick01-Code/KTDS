@@ -1,0 +1,232 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  SCHOOL_MANAGER
+  TEACHER
+  DOD
+  PATRON
+  MATRON
+  PARENT
+}
+
+enum InvitationStatus {
+  UNUSED
+  USED
+  EXPIRED
+  REVOKED
+}
+
+model School {
+  id        String   @id @default(uuid()) @map("_id")
+  name      String
+  logoUrl   String?
+  phone     String?
+  email     String?
+  address   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users       User[]
+  invitations UserInvitation[]
+  students    Student[]
+  academicYears AcademicYear[]
+  classes       Class[]
+  disciplineCategories DisciplineCategory[]
+  incidents     DisciplineIncident[]
+  notifications Notification[]
+  announcements Announcement[]
+}
+
+model User {
+  id        String   @id @default(uuid()) @map("_id")
+  schoolId  String
+  fullName  String
+  email     String?  @unique
+  phone     String?  @unique
+  password  String
+  role      UserRole
+  status    String   @default("ACTIVE")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  school School @relation(fields: [schoolId], references: [id])
+}
+
+model UserInvitation {
+  id           String           @id @default(uuid()) @map("_id")
+  schoolId     String
+  fullName     String
+  email        String?
+  phone        String?
+  role         UserRole
+  referralCode String           @unique // 5-digit code
+  status       InvitationStatus @default(UNUSED)
+  createdBy    String
+  expiresAt    DateTime
+  usedAt       DateTime?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  school School @relation(fields: [schoolId], references: [id])
+}
+
+model Student {
+  id           String   @id @default(uuid()) @map("_id")
+  schoolId     String
+  studentId    String   @unique
+  fullName     String
+  dateOfBirth  DateTime?
+  gender       String?
+  parentPhone  String?
+  parentWhatsApp String?
+  status       String   @default("ACTIVE")
+  admissionDate DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  school School @relation(fields: [schoolId], references: [id])
+}
+
+model AcademicYear {
+  id        String   @id @default(uuid()) @map("_id")
+  schoolId  String
+  name      String // e.g. "2026-2027"
+  status    String   @default("ACTIVE") // ACTIVE, ARCHIVED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  school School @relation(fields: [schoolId], references: [id])
+  terms  Term[]
+  classes Class[]
+}
+
+model Term {
+  id             String   @id @default(uuid()) @map("_id")
+  academicYearId String
+  name           String // Term 1, Term 2, Term 3
+  status         String   @default("ACTIVE")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  academicYear AcademicYear @relation(fields: [academicYearId], references: [id])
+}
+
+model Class {
+  id              String   @id @default(uuid()) @map("_id")
+  schoolId        String
+  academicYearId  String
+  name            String
+  classTeacherId  String?
+  status          String   @default("ACTIVE")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  school       School       @relation(fields: [schoolId], references: [id])
+  academicYear AcademicYear @relation(fields: [academicYearId], references: [id])
+}
+
+model DisciplineCategory {
+  id          String   @id @default(uuid()) @map("_id")
+  schoolId    String
+  name        String
+  description String?
+  defaultPoints Int    @default(1)
+  severity    String   @default("NORMAL") // NORMAL, MEDIUM, SERIOUS
+  status      String   @default("ACTIVE")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  school    School               @relation(fields: [schoolId], references: [id])
+  incidents DisciplineIncident[]
+}
+
+model DisciplineIncident {
+  id                 String   @id @default(uuid()) @map("_id")
+  schoolId           String
+  studentId          String
+  academicYearId     String
+  termId             String
+  categoryId         String
+  description        String
+  points             Int
+  recordedById       String
+  date               DateTime @default(now())
+  location           String?
+  status             String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  school       School             @relation(fields: [schoolId], references: [id])
+  category     DisciplineCategory @relation(fields: [categoryId], references: [id])
+  approvals    DeductionApproval?
+}
+
+model DeductionApproval {
+  id          String   @id @default(uuid()) @map("_id")
+  incidentId  String   @unique
+  approvedById String
+  status      String   // APPROVED, REJECTED
+  reason      String?
+  createdAt   DateTime @default(now())
+
+  incident DisciplineIncident @relation(fields: [incidentId], references: [id])
+}
+
+model DisciplineEscalation {
+  id             String   @id @default(uuid()) @map("_id")
+  studentId      String
+  academicYearId String
+  termId         String
+  score          Int
+  status         String   @default("OPEN") // OPEN, REVIEWED, CLOSED
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model AuditLog {
+  id          String   @id @default(uuid()) @map("_id")
+  schoolId    String
+  userId      String
+  userRole    UserRole
+  action      String
+  entityType  String
+  entityId    String?
+  previousValue Json?
+  newValue    Json?
+  reason      String?
+  timestamp   DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(uuid()) @map("_id")
+  schoolId  String
+  userId    String
+  title     String
+  message   String
+  type      String   // DEDUCTION, THRESHOLD, ANNOUNCEMENT, etc.
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  school School @relation(fields: [schoolId], references: [id])
+}
+
+model Announcement {
+  id        String   @id @default(uuid()) @map("_id")
+  schoolId  String
+  title     String
+  message   String
+  audience  String   // ALL, TEACHERS, PARENTS, etc.
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  school School @relation(fields: [schoolId], references: [id])
+}
